@@ -3,10 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from statsmodels.tsa.arima.model import ARIMA
 
-# Assuming you have a pandas DataFrame with a 'date' column and a 'value' column
-# Make sure the 'date' column is of datetime type and sorted in ascending order
-
-# Read the data into a DataFrame and set 'date' as the index
+# Loading data for Lebron's game by game scoring
 data = pd.read_csv("Lebron_data.csv")
 data["Date"] = pd.to_datetime(data["Date"])
 data.set_index("Date", inplace=True)
@@ -14,19 +11,19 @@ data.set_index("Date", inplace=True)
 yearly_ppg = data.groupby(data.index.year).mean()
 # Split the data into training and testing sets
 train_data = yearly_ppg.iloc[
-    :-2
-]  # Use data from 2015 onwards except the last 2 seasons for training
-test_data = yearly_ppg.iloc[-2:]  # Last 2 years for testing
+    :-5
+]  # Use data from 2015 onwards for testing
+test_data = yearly_ppg.iloc[-5:]  # Last 5 years for testing
 
 # Fit the ARIMA model
-model = ARIMA(train_data["pts"], order=(11, 1, 1))  # Example order, adjust as needed
+model = ARIMA(train_data["pts"], order=(5, 1, 1))  #Order AR is comparing previous 5 year averages(2015 & before)
 model_fit = model.fit()
 
-# Forecast 2 years ahead
-forecast = model_fit.forecast(steps=5)  # Forecasting 82 games which is (1 season)
+# Forecast 5 years ahead
+forecast = model_fit.forecast(steps=5)  # Forecasting 5 years
 df = forecast.to_frame(name="pts")
 
-# Creating yearly forecast thing for the next year
+# Creating yearly forecast for pts for the next year
 forecast_dates = pd.Series([2016,2017,2018,2019,2020])
 forecast_pts = pd.Series(forecast.array,index=range(0,5))
 forecast_df = pd.concat([forecast_pts.rename("pts"),forecast_dates.rename("Date")],axis=1)
