@@ -1,40 +1,83 @@
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
+from sklearn import metrics
+import plotly.express as px
 from statsmodels.tsa.arima.model import ARIMA
+from dash import Dash, dcc, html, callback, Output, Input
+import numpy as np
 
-# Loading data for Lebron's game by game scoring
-data = pd.read_csv("Lebron_data.csv")
-data["Date"] = pd.to_datetime(data["Date"])
-data.set_index("Date", inplace=True)
+lebron_stats = pd.read_csv("lebron_career.csv",parse_dates=["date"])
+lebron_stats["Year"] = lebron_stats.date.dt.year
+lebron_stats["Month"] = lebron_stats.date.dt.month
 
-yearly_ppg = data.groupby(data.index.year).mean()
-# Split the data into training and testing sets
-train_data = yearly_ppg.iloc[
-    :-5
-]  # Use data from 2015 onwards for testing
-test_data = yearly_ppg.iloc[-5:]  # Last 5 years for testing
+app = Dash(__name__)
 
-# Fit the ARIMA model
-model = ARIMA(train_data["pts"], order=(5, 1, 1))  #Order AR is comparing previous 5 year averages(2015 & before)
-model_fit = model.fit()
+app.layout = html.Div(children=[
+    html.H1(children='Lebron Statistics'),
+    dcc.Dropdown(lebron_stats.Year.unique(),2011,id="dropdown"),
+    dcc.Graph(
+        id="graph"
+    ),
+    html.H4(id="analysis-of-forecast-MAE"),
+    html.H4(id="analysis-of-forecast-MSE"),
+    html.H4(id="analysis-of-forecast-RMSE")
+])
 
-# Forecast 5 years ahead
-forecast = model_fit.forecast(steps=5)  # Forecasting 5 years
-df = forecast.to_frame(name="pts")
+@callback(
+    Output('graph', 'figure'),
+    Input('dropdown', 'value')
+)
+def update_graph(value):
+    train_data = lebron_stats.query(f"Year == {value} and Month < 6").iloc[:-5]
+    test_data = lebron_stats.query(f"Year == {value} and Month < 6").iloc[-5:]
+    # Fit the ARIMA model
+    model = ARIMA(train_data["pts"], order=(15, 1, 1))  #Order AR is comparing previous 10 weeks of scoring
+    model_fit = model.fit()
 
-# Creating yearly forecast for pts for the next year
-forecast_dates = pd.Series([2016,2017,2018,2019,2020])
-forecast_pts = pd.Series(forecast.array,index=range(0,5))
-forecast_df = pd.concat([forecast_pts.rename("pts"),forecast_dates.rename("Date")],axis=1)
-forecast_df.set_index("Date",inplace=True)
+    # Forecast 5 years ahead
+    forecast = model_fit.forecast(steps=5)  # Forecasting 4 weeks
+    df = forecast.to_frame(name="pts")
+    # Creating yearly forecast for pts for the next year
+    forecast_dates = pd.Series(test_data.date)
+    forecast_dates =forecast_dates.to_frame()
+    forecast_dates.reset_index(inplace=True)
+    forecast_pts = pd.Series(forecast.array,index=range(0,5))
+    forecast_df = pd.concat([forecast_pts.rename("pts"),forecast_dates["date"]],axis=1)
+    forecast_df.set_index("date",inplace=True)
+    fig = px.line(lebron_stats.query(f"Year == {value} and Month < 6"),x="date",y="pts",
+        labels={"pts":"Points Per Game"},title="Points Per Game").update_layout(
+        paper_bgcolor="white",plot_bgcolor="white",title={"x":.5,"y":.85,"font":{"size":30}}
+        ).update_yaxes(
+        gridcolor="black")
+    fig.add_scatter(x=forecast_df.index,y=forecast_df["pts"],mode="lines")
+    return fig
 
-# Plot the actual and forecasted values
-plt.plot(yearly_ppg.index, yearly_ppg["pts"], label="Actual")
-plt.plot(forecast_df.index, forecast_df["pts"], label="Forecast")
-plt.xlabel("Year")
-plt.ylabel("Points Per Game")
-plt.title("Time Series Forecast For Lebron's Scoring")
-plt.xticks([2005,2010,2015,2020],["2005","2010","2015","2020"])
-plt.legend()
-plt.show()
+@callback(
+    Output('analysis-of-forecast-MAE', 'children'),
+    Output('analysis-of-forecast-MSE', 'children'),
+    Output('analysis-of-forecast-RMSE', 'children'),
+    Input('dropdown', 'value')
+)
+def update_forecast_score(value):
+    train_data = lebron_stats.query(f"Year == {value} and Month < 6").iloc[:-5]
+    test_data = lebron_stats.query(f"Year == {value} and Month < 6").iloc[-5:]
+    # Fit the ARIMA model
+    model = ARIMA(train_data["pts"], order=(20, 1, 1))  #Order AR is comparing previous 10 weeks of scoring
+    model_fit = model.fit()
+
+    # Forecast 5 years ahead
+    forecast = model_fit.forecast(steps=5)  # Forecasting 4 weeks
+    df = forecast.to_frame(name="pts")
+    # Creating yearly forecast for pts for the next year
+    forecast_dates = pd.Series(test_data.date)
+    forecast_dates =forecast_dates.to_frame()
+    forecast_dates.reset_index(inplace=True)
+    forecast_pts = pd.Series(forecast.array,index=range(0,5))
+    forecast_df = pd.concat([forecast_pts.rename("pts"),forecast_dates["date"]],axis=1)
+    forecast_df.set_index("date",inplace=True)
+    MAE = "MAE: "+str(metrics.mean_absolute_error(test_data["pts"],forecast_df["pts"]))
+    MSE = "MSE: "+str(metrics.mean_squared_error(test_data["pts"],forecast_df["pts"]))
+    RMSE = "RMSE: "+str(np.sqrt(metrics.mean_squared_error(test_data["pts"],forecast_df["pts"])))
+    return MAE, MSE, RMSE
+
+if __name__ == '__main__':
+    app.run_server(debug=True)
