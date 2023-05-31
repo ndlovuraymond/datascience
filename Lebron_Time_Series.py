@@ -24,6 +24,9 @@ app.layout = html.Div(children=[
 
 @callback(
     Output('graph', 'figure'),
+    Output('analysis-of-forecast-MAE', 'children'),
+    Output('analysis-of-forecast-MSE', 'children'),
+    Output('analysis-of-forecast-RMSE', 'children'),
     Input('dropdown', 'value')
 )
 def update_graph(value):
@@ -49,35 +52,11 @@ def update_graph(value):
         ).update_yaxes(
         gridcolor="black")
     fig.add_scatter(x=forecast_df.index,y=forecast_df["pts"],mode="lines")
-    return fig
-
-@callback(
-    Output('analysis-of-forecast-MAE', 'children'),
-    Output('analysis-of-forecast-MSE', 'children'),
-    Output('analysis-of-forecast-RMSE', 'children'),
-    Input('dropdown', 'value')
-)
-def update_forecast_score(value):
-    train_data = lebron_stats.query(f"Year == {value} and Month < 6").iloc[:-5]
-    test_data = lebron_stats.query(f"Year == {value} and Month < 6").iloc[-5:]
-    # Fit the ARIMA model
-    model = ARIMA(train_data["pts"], order=(20, 1, 1))  #Order AR is comparing previous 10 weeks of scoring
-    model_fit = model.fit()
-
-    # Forecast 5 years ahead
-    forecast = model_fit.forecast(steps=5)  # Forecasting 4 weeks
-    df = forecast.to_frame(name="pts")
-    # Creating yearly forecast for pts for the next year
-    forecast_dates = pd.Series(test_data.date)
-    forecast_dates =forecast_dates.to_frame()
-    forecast_dates.reset_index(inplace=True)
-    forecast_pts = pd.Series(forecast.array,index=range(0,5))
-    forecast_df = pd.concat([forecast_pts.rename("pts"),forecast_dates["date"]],axis=1)
-    forecast_df.set_index("date",inplace=True)
     MAE = "MAE: "+str(metrics.mean_absolute_error(test_data["pts"],forecast_df["pts"]))
     MSE = "MSE: "+str(metrics.mean_squared_error(test_data["pts"],forecast_df["pts"]))
     RMSE = "RMSE: "+str(np.sqrt(metrics.mean_squared_error(test_data["pts"],forecast_df["pts"])))
-    return MAE, MSE, RMSE
+    return fig,MAE, MSE, RMSE
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
