@@ -3,4 +3,4 @@ sklearn
 numpy
 plotly
 dash
-statsmodel
+statsmodels
