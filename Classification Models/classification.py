@@ -1,10 +1,8 @@
 # Import libraries
-## Basic libs
 import pandas as pd
 import numpy as np
 import warnings
-## Data Visualization
-import seaborn as sns
+# Data Visualization
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import OneHotEncoder
@@ -115,26 +113,23 @@ fig.set_figwidth(14)
 fig.set_facecolor('white')
 
 # First plot
-## set bar size
+# set bar size
 barWidth = 0.2
 dtc_score = [dtc_eval['acc'], dtc_eval['prec'], dtc_eval['rec'], dtc_eval['f1'], dtc_eval['kappa']]
 # rf_score = [rf_eval['acc'], rf_eval['prec'], rf_eval['rec'], rf_eval['f1'], rf_eval['kappa']]
 # nb_score = [nb_eval['acc'], nb_eval['prec'], nb_eval['rec'], nb_eval['f1'], nb_eval['kappa']]
 # knn_score = [knn_eval['acc'], knn_eval['prec'], knn_eval['rec'], knn_eval['f1'], knn_eval['kappa']]
 
-## Set position of bar on X axis
+# Set position of bar on X axis
 r1 = np.arange(len(dtc_score))
 r2 = [x + barWidth for x in r1]
 r3 = [x + barWidth for x in r2]
 r4 = [x + barWidth for x in r3]
 
-## Make the plot
+# Make the plot
 ax1.bar(r1, dtc_score, width=barWidth, edgecolor='white', label='Decision Tree')
-# ax1.bar(r2, rf_score, width=barWidth, edgecolor='white', label='Random Forest')
-# ax1.bar(r3, nb_score, width=barWidth, edgecolor='white', label='Naive Bayes')
-# ax1.bar(r4, knn_score, width=barWidth, edgecolor='white', label='K-Nearest Neighbors')
 
-## Configure x and y axis
+# Configure x and y axis
 ax1.set_xlabel('Metrics', fontweight='bold')
 labels = ['Accuracy', 'Precision', 'Recall', 'F1', 'Kappa']
 ax1.set_xticks([r + (barWidth * 1.5) for r in range(len(dtc_score))], )
@@ -149,9 +144,6 @@ ax1.legend()
 # Second plot
 ## Comparing ROC Curve
 ax2.plot(dtc_eval['fpr'], dtc_eval['tpr'], label='Decision Tree, auc = {:0.5f}'.format(dtc_eval['auc']))
-# ax2.plot(rf_eval['fpr'], rf_eval['tpr'], label='Random Forest, auc = {:0.5f}'.format(rf_eval['auc']))
-# ax2.plot(nb_eval['fpr'], nb_eval['tpr'], label='Naive Bayes, auc = {:0.5f}'.format(nb_eval['auc']))
-# ax2.plot(knn_eval['fpr'], knn_eval['tpr'], label='K-Nearest Nieghbor, auc = {:0.5f}'.format(knn_eval['auc']))
 
 ## Configure x and y axis
 ax2.set_xlabel('False Positive Rate', fontweight='bold')
