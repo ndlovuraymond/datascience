@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import OneHotEncoder
 from sklearn import tree
+from sklearn import metrics
 
 # Configure libraries
 warnings.filterwarnings('ignore')
@@ -66,8 +67,6 @@ print('Shape of training label:', y_train.shape)
 print('Shape of training label:', y_test.shape)
 
 def evaluate_model(model, x_test, y_test):
-    from sklearn import metrics
-
     # Predict Test Data 
     y_pred = model.predict(x_test)
 
@@ -116,9 +115,6 @@ fig.set_facecolor('white')
 # set bar size
 barWidth = 0.2
 dtc_score = [dtc_eval['acc'], dtc_eval['prec'], dtc_eval['rec'], dtc_eval['f1'], dtc_eval['kappa']]
-# rf_score = [rf_eval['acc'], rf_eval['prec'], rf_eval['rec'], rf_eval['f1'], rf_eval['kappa']]
-# nb_score = [nb_eval['acc'], nb_eval['prec'], nb_eval['rec'], nb_eval['f1'], nb_eval['kappa']]
-# knn_score = [knn_eval['acc'], knn_eval['prec'], knn_eval['rec'], knn_eval['f1'], knn_eval['kappa']]
 
 # Set position of bar on X axis
 r1 = np.arange(len(dtc_score))
