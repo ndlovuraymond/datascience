@@ -9,6 +9,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import OneHotEncoder
 from sklearn import tree
 from sklearn import metrics
+from sklearn.metrics import auc, precision_recall_curve
+from sklearn.tree import DecisionTreeClassifier
 
 # Configure libraries
 warnings.filterwarnings("ignore")
@@ -171,18 +173,30 @@ ax1.legend()
 
 # Second plot
 ## Plotting the ROC curve
-ax2.plot(
-    dtc_eval["fpr"],
-    dtc_eval["tpr"],
-    label="Decision Tree, auc = {:0.5f}".format(dtc_eval["auc"]),
-)
+#ax2.plot(
+#    dtc_eval["fpr"],
+#    dtc_eval["tpr"],
+#    label="Decision Tree, auc = {:0.5f}".format(dtc_eval["auc"]),
+#)
 
 ## Configure x and y axis
-ax2.set_xlabel("False Positive Rate", fontweight="bold")
-ax2.set_ylabel("True Positive Rate", fontweight="bold")
+#ax2.set_xlabel("False Positive Rate", fontweight="bold")
+#ax2.set_ylabel("True Positive Rate", fontweight="bold")
 
 ## Create legend & title
-ax2.set_title("ROC Curve", fontsize=14, fontweight="bold")
-ax2.legend(loc=4)
+#ax2.set_title("ROC Curve", fontsize=14, fontweight="bold")
+#ax2.legend(loc=4)
 
+#plt.show()
+
+#making a PR curve
+model_dt = DecisionTreeClassifier().fit(X_train,y_train)
+probs_dt = model_dt.predict_proba(X_test)[:,1]
+precision_dt, recall_dt,thresholds = precision_recall_curve(y_test,probs_dt)
+auc_dt = auc(recall_dt,precision_dt)
+ax2.plot(recall_dt,precision_dt,label=f"AUC (Decision Tree) ={auc_dt:.2f}")
+plt.xlabel("Precision")
+plt.ylabel("Recall")
+plt.title("PR Curve")
 plt.show()
+
