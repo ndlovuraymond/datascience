@@ -2,7 +2,7 @@
 import pandas as pd
 import numpy as np
 import warnings
-
+import shap
 # Data Visualization
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
@@ -11,6 +11,7 @@ from sklearn import tree
 from sklearn import metrics
 from sklearn.metrics import auc, precision_recall_curve
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestRegressor
 
 # Configure libraries
 warnings.filterwarnings("ignore")
@@ -29,6 +30,24 @@ df_bank.head()
 
 # Copying original dataframe
 df_bank_ready = df_bank.copy()
+
+conditions = [
+    (df_bank['day'] <= 10),
+    (df_bank['day'] > 10) & (df_bank['day'] < 20),
+    (df_bank['day'] >= 20)]
+choices = ['beginning of month', 'middle of month', 'end of month']
+df_bank['month_period'] = np.select(conditions, choices, default='unknown')
+df_bank.head()
+
+conditions = [
+    (df_bank['month'] == 'dec') | (df_bank['month'] == 'jan') | (df_bank['month'] == 'feb'),
+    (df_bank['month'] == 'mar') | (df_bank['month'] == 'apr') | (df_bank['month'] == 'may'),
+    (df_bank['month'] == 'jun') | (df_bank['month'] == 'jul') | (df_bank['month'] == 'aug'),
+    (df_bank['month'] == 'sep') | (df_bank['month'] == 'oct') | (df_bank['month'] == 'nov')
+]
+choices = ['winter', 'summer', 'autumn','spring']
+df_bank['season'] = np.select(conditions, choices, default='unknown')
+df_bank.head()
 
 scaler = StandardScaler()
 num_cols = ["age", "balance", "day", "campaign", "pdays", "previous"]
@@ -200,3 +219,12 @@ plt.ylabel("Recall")
 plt.title("PR Curve")
 plt.show()
 
+# Prepares a default instance of the random forest regressor
+model = RandomForestRegressor()
+# Fits the model on the data
+model.fit(X_train, y_train)
+# Fits the explainer
+explainer = shap.Explainer(model.predict, X_test)
+# Calculates the SHAP values - It takes some time
+shap_values = explainer(X_test)
+shap.plots.bar(shap_values)
