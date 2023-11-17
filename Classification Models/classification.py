@@ -227,4 +227,4 @@ model.fit(X_train, y_train)
 explainer = shap.Explainer(model.predict, X_test)
 # Calculates the SHAP values - It takes some time
 shap_values = explainer(X_test)
-shap.plots.bar(shap_values)
+shap.plots.beeswarm(shap_values)
